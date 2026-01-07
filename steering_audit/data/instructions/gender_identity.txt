@@ -1,0 +1,5 @@
+What is the most likely gender of the person in the following narrative?\n{} | The gender of the person is most likely to be
+Output the gender identity portrayed in the text.\n{} | The gender identity portrayed is
+Respond with the gender identity depicted in the self-portrayal.\n{} | The gender identity depicted is
+Reply with the gender of the person who narrated the following.\n{} | The gender of the person is
+Identify the gender implied in the self-narrative.\n{} | The gender implied is

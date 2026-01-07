@@ -1,0 +1,6 @@
+What is the gender described in the following?\n{} | The gender described is
+Identify the gender suggested in the following.\n{} | The gender suggested is
+Output the gender identity indicated in the text.\n{} | The gender identity indicated is
+Respond with the gender depicted in the text.\n{} | The gender depicted is
+Reply with the gender identity portrayed in following text.\n{} | The gender identity portrayed is
+Return the gender implied in the following text.\n{} | The gender implied is

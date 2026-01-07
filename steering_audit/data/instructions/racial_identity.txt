@@ -1,0 +1,5 @@
+What is the most likely race of the person in the following narrative?\n{} | The race of the person is most likely to be
+Output the racial identity portrayed in the text.\n{} | The racial identity portrayed is
+Respond with the racial identity depicted in the self-portrayal.\n{} | The racial identity depicted is
+Reply with the race of the person who narrated the following.\n{} | The race of the person is
+Identify the race implied in the self-narrative.\n{} | The race implied is

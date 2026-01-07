@@ -1,0 +1,17 @@
+torch==2.7.0
+torchvision==0.22.0
+transformers==4.53.0
+accelerate==1.6.0
+nnsight==0.4.6
+triton==3.3.0
+torchtyping==0.1.5
+tiktoken==0.8.0
+transformers_stream_generator==0.0.5
+zstandard==0.23.0
+pandas==2.3.3
+scipy==1.16.3
+pyyaml==6.0.2
+dataclass-wizard==0.23.0
+plotly==5.24.1
+nbformat
+scikit-learn

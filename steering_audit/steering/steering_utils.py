@@ -1,5 +1,5 @@
 import copy
-from typing import Tuple, Union, List
+from typing import Union, List
 import numpy as np
 import pandas as pd
 import torch
@@ -15,43 +15,16 @@ def RMS(x: Union[List[float], np.ndarray]) -> np.ndarray:
     return np.sqrt(np.mean(x ** 2)).item()
 
 
-def RMSE(projections: np.ndarray, censor_scores: np.ndarray) -> np.ndarray:
+def RMSE(projections: np.ndarray, concept_disparity_scores: np.ndarray) -> np.ndarray:
     """
-    Root mean square error (RMSE) between the scalar projection and censor score of each input.
+    Root mean square error (RMSE) between the scalar projection and the concept disparity score of each input.
     """
     # Mask out ones where both share the same sign (direction)
-    mask = np.where(np.sign(censor_scores) != np.sign(projections), 1, 0)
-    return RMS(censor_scores * mask)
+    mask = np.where(np.sign(concept_disparity_scores) != np.sign(projections), 1, 0)
+    return RMS(concept_disparity_scores * mask)
 
-
-# def compute_vector_scale(projections: np.ndarray, censor_scores: np.ndarray, pct=0.95) -> Tuple[float, float]:
-#     proj_score_pairs = pd.DataFrame({"projection": projections, "score": censor_scores})
-
-#     pos_pairs = proj_score_pairs[proj_score_pairs.score > 0]
-#     neg_pairs = proj_score_pairs[proj_score_pairs.score < 0]
-    
-#     pos_scale = abs(pos_pairs.projection.quantile(pct) / pos_pairs.score.quantile(pct))
-#     neg_scale = abs(neg_pairs.projection.quantile(1 - pct) / neg_pairs.score.quantile(1 - pct))
-
-#     return pos_scale, neg_scale
-
-
-# def compute_vector_scale(projections: np.ndarray, censor_scores: np.ndarray) -> Tuple[float, float]:
-#     proj_score_pairs = pd.DataFrame({"projection": projections, "score": censor_scores})
-
-#     pos_pairs = proj_score_pairs[proj_score_pairs.score > 0]
-#     neg_pairs = proj_score_pairs[proj_score_pairs.score < 0]
-
-#     def get_range(x, col):
-#         return x[col].max() - x[col].min()
-    
-#     pos_scale = abs(get_range(pos_pairs, "projection") / get_range(pos_pairs, "score"))
-#     neg_scale = abs(get_range(neg_pairs, "projection") / get_range(neg_pairs, "score"))
-
-#     return pos_scale, neg_scale
-
-def compute_vector_scale(projections: np.ndarray, censor_scores: np.ndarray, pct=0.9) -> float:
-    proj_score_pairs = pd.DataFrame({"projection": projections, "score": censor_scores})
+def compute_vector_scale(projections: np.ndarray, concept_disparity_scores: np.ndarray, pct=0.9) -> float:
+    proj_score_pairs = pd.DataFrame({"projection": projections, "score": concept_disparity_scores})
 
     pos_pairs = proj_score_pairs[proj_score_pairs.score > 0]
     neg_pairs = proj_score_pairs[proj_score_pairs.score < 0]

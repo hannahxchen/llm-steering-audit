@@ -68,7 +68,7 @@ class Dataset:
         df["sample_weight"] = df["bin"].apply(lambda x: 1 / bin_freq[x]**2)
         return df.sample(sample_size, weights="sample_weight")
     
-    def compute_concept_score(self, model, prompts: List[str], batch_size: int) -> Tuple[np.ndarray, np.ndarray]:
+    def compute_concept_disparity_score(self, model, prompts: List[str], batch_size: int) -> Tuple[np.ndarray, np.ndarray]:
         pos_token_ids = get_target_token_ids(model.tokenizer, self.pos_tokens)
         neg_token_ids = get_target_token_ids(model.tokenizer, self.neg_tokens)
 
@@ -96,7 +96,7 @@ class Dataset:
                 continue
 
             formatted_prompts = self.get_formatted_prompts(datasplit, model.apply_chat_template)
-            pos_probs, neg_probs = self.compute_concept_score(model, formatted_prompts, batch_size, **kwargs)
+            pos_probs, neg_probs = self.compute_concept_disparity_score(model, formatted_prompts, batch_size, **kwargs)
 
             datasplit["pos_prob"] = pos_probs
             datasplit["neg_prob"] = neg_probs

@@ -23,6 +23,17 @@ def loop_coeffs(min_coeff=-1, max_coeff=1, increment=0.1) -> List[float]:
 
 
 class Evaluator():
+    """Runs white-box (steering) and black-box evaluations on tasks.
+
+    The Evaluator handles running model inference with and without steering,
+    computing next-token probabilities, and generating text completions.
+    Results are saved to JSON files for later analysis.
+
+    Attributes:
+        cfg: Evaluation configuration (batch sizes, generation params).
+        use_cache: Whether to skip re-running if output files exist.
+        save_dir: Directory to save evaluation results.
+    """
     def __init__(
         self, cfg: EvalConfig, save_dir: Path, use_cache: bool = False
     ):
@@ -82,6 +93,15 @@ class Evaluator():
 
 
     def run_baseline(self, model: ModelBase, task: Task):
+        """Run black-box baseline evaluation on a task.
+
+        Evaluates the model without steering, using either next-token
+        probabilities (if task has output_labels) or text generation.
+
+        Args:
+            model: The model to evaluate.
+            task: The task to run evaluation on.
+        """
         os.makedirs(self.save_dir / task.task_name, exist_ok=True)
         if task.explicit:
             filename = f"{task.task_name}_explicit-baseline.json"
@@ -103,6 +123,17 @@ class Evaluator():
         task.save_outputs(outputs, save_filepath)
       
     def run_steering(self, steering_cfg: SteeringConfig, model: ModelBase, task: Task, steering_vec: SteeringVector):
+        """Run white-box evaluation with steering vectors on a task.
+
+        Iterates through steering coefficients, applying the steering vector
+        and recording model outputs for each coefficient value.
+
+        Args:
+            steering_cfg: Configuration for steering (layer, coefficient range).
+            model: The model to evaluate.
+            task: The task to run evaluation on.
+            steering_vec: Pre-computed steering vector to apply.
+        """
         os.makedirs(self.save_dir / task.task_name, exist_ok=True)
         logging.info(f"Running Task: {task.task_name}")
         prompts = task.prepare_inputs(model.apply_chat_template)

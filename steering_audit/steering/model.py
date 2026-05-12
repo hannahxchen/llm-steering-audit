@@ -16,7 +16,7 @@ if torch.cuda.is_available():
 elif torch.backends.mps.is_available():
     device = "mps"
 else:
-    device = "cuda"
+    device = "cpu"
 
 
 def detect_module_attrs(model: LanguageModel) -> str:
@@ -31,9 +31,23 @@ def detect_module_attrs(model: LanguageModel) -> str:
 
 
 class ModelBase:
+    """Wrapper for language models providing activation extraction and steering capabilities.
+
+    This class wraps HuggingFace models using nnsight to provide convenient methods for 
+    extracting activations, computing logits, generating text, and applying steering interventions.
+
+    Attributes:
+        model: The underlying nnsight LanguageModel.
+        tokenizer: The model's tokenizer.
+        device: Device the model is loaded on.
+        dtype: Data type of model weights.
+        n_layer: Number of transformer layers.
+        hidden_size: Hidden dimension size.
+        block_modules: Module envoy for accessing transformer layers.
+    """
     def __init__(
-        self, model_name: str, 
-        tokenizer: AutoTokenizer = None, 
+        self, model_name: str,
+        tokenizer: AutoTokenizer = None,
         block_module_attr: Optional[str] = None,
         chat_template: str = None,
         **model_kwargs
@@ -78,11 +92,24 @@ class ModelBase:
     
     @classmethod
     def load(
-        cls, model_name: str, tokenizer: AutoTokenizer = None, 
-        device_map="auto", torch_dtype=torch.bfloat16, 
+        cls, model_name: str, tokenizer: AutoTokenizer = None,
+        device_map="auto", torch_dtype=torch.bfloat16,
         block_module_attr=None, **model_kwargs
     ) -> Self:
-        return cls(model_name, tokenizer=tokenizer, device_map=device_map, 
+        """Load a ModelBase instance.
+
+        Args:
+            model_name: HuggingFace model name or path.
+            tokenizer: Optional pre-loaded tokenizer.
+            device_map: Device map for model loading (default: "auto").
+            torch_dtype: Data type for model weights (default: bfloat16).
+            block_module_attr: Optional attribute path to transformer layers.
+            **model_kwargs: Additional arguments passed to LanguageModel.
+
+        Returns:
+            Loaded ModelBase instance.
+        """
+        return cls(model_name, tokenizer=tokenizer, device_map=device_map,
                    torch_dtype=torch_dtype, block_module_attr=block_module_attr, **model_kwargs)
 
     def tokenize(self, prompts: Union[str, List[str], BatchEncoding]) -> BatchEncoding:
@@ -124,10 +151,20 @@ class ModelBase:
         return prompts
         
     def get_activations(
-        self, layers: Union[int, List[int]], 
+        self, layers: Union[int, List[int]],
         prompts: Union[str, List[str], BatchEncoding],
         positions: Optional[List[int]] = [-1]
     ) -> List[TensorType["n_layer", "n_prompt", "n_pos", "hidden_size"]]:
+        """Extract activations from specified layers.
+
+        Args:
+            layers: Layer index or list of layer indices to extract from.
+            prompts: Input prompts (strings or tokenized batch).
+            positions: Token positions to extract. Defaults to [-1] (last token).
+
+        Returns:
+            Stacked activations tensor [n_layers, n_prompts, n_pos, hidden_size].
+        """
         
         if isinstance(layers, int):
             layers = [layers]
@@ -149,10 +186,21 @@ class ModelBase:
         return torch.vstack(all_acts)
     
     def get_logits(
-        self, prompts: Union[str, List[str], BatchEncoding], 
-        layer_id: int = None, 
+        self, prompts: Union[str, List[str], BatchEncoding],
+        layer_id: int = None,
         steering_func: Callable = None, **kwargs
     ) -> TensorType["n_prompt", "seq_len", "vocab_size"]:
+        """Compute logits for given prompts, optionally with steering.
+
+        Args:
+            prompts: Input prompts to compute logits for.
+            layer_id: Layer to apply steering at (required if steering_func provided).
+            steering_func: Optional steering function to modify activations.
+            **kwargs: Additional arguments.
+
+        Returns:
+            Logits tensor [n_prompts, seq_len, vocab_size].
+        """
         inputs = self.tokenize(prompts)
 
         if steering_func is not None:
@@ -167,13 +215,35 @@ class ModelBase:
         return logits.detach().to("cpu").to(torch.float64)
 
     def get_last_position_logits(self, prompts: Union[str, List[str], BatchEncoding], **kwargs) -> TensorType["n_prompt", "vocab_size"]:
+        """Get logits for the last token position (next token prediction).
+
+        Args:
+            prompts: Input prompts.
+            **kwargs: Passed to get_logits (layer_id, steering_func, etc.).
+
+        Returns:
+            Logits for next token prediction [n_prompts, vocab_size].
+        """
         return self.get_logits(prompts, **kwargs)[:, -1, :]
     
     def generate(
-        self, prompts: Union[str, List[str], TensorType[int, "n_prompt", "seq_len"]],  
-        layer_id: int = None, steering_func: Callable = None, 
+        self, prompts: Union[str, List[str], TensorType[int, "n_prompt", "seq_len"]],
+        layer_id: int = None, steering_func: Callable = None,
         max_new_tokens: int = 10, do_sample: bool = False, **kwargs
     ) -> List[str]:
+        """Generate text completions, optionally with steering.
+
+        Args:
+            prompts: Input prompts or tokenized inputs.
+            layer_id: Layer to apply steering at (required if steering_func provided).
+            steering_func: Optional steering function to modify activations.
+            max_new_tokens: Maximum number of new tokens to generate.
+            do_sample: Whether to use sampling (vs greedy decoding).
+            **kwargs: Additional generation arguments (temperature, top_p, etc.).
+
+        Returns:
+            List of generated text completions (decoded, without input prompt).
+        """
         inputs = self.tokenize(prompts)
 
         if steering_func is not None:

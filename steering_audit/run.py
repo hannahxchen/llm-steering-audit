@@ -59,7 +59,17 @@ def parse_arguments():
 def get_all_layer_activations(
     model: ModelBase, prompts: List[str], batch_size: Optional[int] = 32, positions=[-1]
 ) -> TensorType["n_layer", "n_prompt", "hidden_size"]:
-    """Extract activations from all model layers"""
+    """Extract activations from all model layers.
+
+    Args:
+        model: The model to extract activations from.
+        prompts: List of input prompts.
+        batch_size: Batch size for processing prompts. Defaults to 32.
+        positions: Token positions to extract activations from. Defaults to [-1] (last token).
+
+    Returns:
+        Tensor of shape [n_layers, n_prompts, hidden_size] containing activations.
+    """
     acts_all = []
     layers = list(range(model.n_layer))
     prompt_iterator = PromptIterator(prompts, batch_size=batch_size)
@@ -74,7 +84,22 @@ def get_all_layer_activations(
 
 
 def train_and_validate(cfg: Config, model: ModelBase, batch_size: int, use_cache: bool = False):
-    """Extract candidate vectors and select a steering vector"""
+    """Extract candidate vectors and select a steering vector.
+
+    Loads training data, computes baseline concept disparity scores, extracts
+    steering vectors using the specified method (WMD or MD), and validates
+    on a held-out validation set to select the best layer.
+
+    Args:
+        cfg: Configuration object containing training parameters.
+        model: The model to extract steering vectors from.
+        batch_size: Batch size for processing prompts.
+        use_cache: Whether to use cached data splits if available.
+
+    Returns:
+        Tuple of (steering_vec, top_layer_id) where steering_vec is the
+        extracted SteeringVector and top_layer_id is the selected layer.
+    """
     datasplits_dir = cfg.artifact_path() / "datasplits"
 
     if use_cache:
@@ -121,11 +146,22 @@ def train_and_validate(cfg: Config, model: ModelBase, batch_size: int, use_cache
 
 
 def steering_eval(
-    evaluator: Evaluator, steering_cfg: SteeringConfig, 
-    model: ModelBase, steering_vec: SteeringVector, 
+    evaluator: Evaluator, steering_cfg: SteeringConfig,
+    model: ModelBase, steering_vec: SteeringVector,
     task_list: List[str]
 ):
-    """Run white-box evaluation with steering vectors"""
+    """Run white-box evaluation with steering vectors.
+
+    Iterates over the specified tasks, applying the steering vector at
+    different coefficients to measure model sensitivity.
+
+    Args:
+        evaluator: Evaluator instance for running evaluations.
+        steering_cfg: Configuration for steering parameters (layer, coefficients).
+        model: The model to evaluate.
+        steering_vec: The pre-computed steering vector to apply.
+        task_list: List of task names to evaluate on.
+    """
     logging.info("Running white-box steering evaluation")
 
     for task_name in task_list:
@@ -135,7 +171,16 @@ def steering_eval(
 
 
 def blackbox_eval(evaluator: Evaluator, model: ModelBase, task_list: List[str]):
-    """Run black-box counterfactual evaluation"""
+    """Run black-box counterfactual evaluation.
+
+    Evaluates the baseline model behavior by manipulating explicit protected
+    attributes in the input (e.g., changing gendered pronouns or names).
+
+    Args:
+        evaluator: Evaluator instance for running evaluations.
+        model: The model to evaluate.
+        task_list: List of task names to evaluate on.
+    """
     logging.info("Running blackbox evaluation")
     for task_name in task_list:
         if task_name.startswith("south-german"):

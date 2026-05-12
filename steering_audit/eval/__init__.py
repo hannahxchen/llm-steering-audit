@@ -11,6 +11,19 @@ eval_tasks = [
 ]
 
 def load_eval_task(task_name: str, explicit: bool = False):
+    """Load an evaluation task by name.
+
+    Args:
+        task_name: Name of the task to load (must be in eval_tasks).
+        explicit: Whether to use explicit protected attributes in prompts.
+
+    Returns:
+        Task instance for the specified task.
+
+    Raises:
+        AssertionError: If task_name is not a valid task.
+        ValueError: If task type is unknown.
+    """
     assert task_name in eval_tasks
     if task_name.startswith("judicial_"):
         return Judicial(task_name, explicit=explicit)

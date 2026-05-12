@@ -18,7 +18,19 @@ concept_labels = {
 
 
 @dataclass
-class Dataset:    
+class Dataset:
+    """Dataset for training and validating steering vectors.
+
+    Manages training and validation data splits, target tokens for the
+    concept being steered, and utilities for computing concept scores.
+
+    Attributes:
+        train_data: Training examples DataFrame.
+        val_data: Validation examples DataFrame.
+        threshold: Score threshold for labeling examples as positive/negative.
+        pos_tokens: List of tokens representing the positive concept class.
+        neg_tokens: List of tokens representing the negative concept class.
+    """
     train_data: pd.DataFrame
     val_data: pd.DataFrame
     threshold: float
@@ -27,6 +39,18 @@ class Dataset:
 
     @classmethod
     def load(cls, concept: str, dataset: str, n_val: int = None, threshold: float = 0, cached_dir: Path = None) -> Self:
+        """Load a Dataset instance.
+
+        Args:
+            concept: Target concept ("gender" or "race").
+            dataset: Dataset name ("gendered_language", "dialect", etc.).
+            n_val: Number of validation examples to load (-1 for all).
+            threshold: Score threshold for positive/negative labeling.
+            cached_dir: Optional directory to load cached data from.
+
+        Returns:
+            Loaded Dataset instance.
+        """
         assert threshold >= 0
         train_data = load_datasplit(dataset, split="train", sample_size=-1, cached_dir=cached_dir)
         val_data = load_datasplit(dataset, split="val", sample_size=n_val, cached_dir=cached_dir)
@@ -88,7 +112,17 @@ class Dataset:
         return pos_probs_all, neg_probs_all
     
     def compute_baseline_scores(self, model: ModelBase, batch_size: int, use_cache: bool = False, **kwargs):
-        """Compute baseline disparity scores for train and validation data."""
+        """Compute baseline disparity scores for train and validation data.
+
+        For each example, computes the model's output probability for positive
+        vs negative concept tokens to establish a "concept disparity score".
+
+        Args:
+            model: The model to compute scores with.
+            batch_size: Batch size for processing examples.
+            use_cache: Whether to skip computation if scores already exist.
+            **kwargs: Additional arguments.
+        """
         logging.info("Preprocessing train/val data")
         for split in ["train", "val"]:
             datasplit = self.__dict__[f"{split}_data"]

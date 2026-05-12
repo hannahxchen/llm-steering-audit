@@ -14,6 +14,16 @@ from .steering_utils import *
 
 @dataclass
 class SteeringVector:
+    """Steering vector for manipulating concepts in language models.
+
+    Attributes:
+        directions: Tensor of shape [n_layers, hidden_size] containing normalized
+            direction vectors for each layer.
+        offsets: Optional tensor of shape [n_layers, hidden_size] containing
+            neutral offsets (used by WMD method).
+        scales: Optional list of scaling factors for each layer to align
+            projection magnitudes with concept scores.
+    """
     directions: TensorType["layer", -1]
     offsets: TensorType["layer", -1] = None
     scales: List[float] = None
@@ -26,7 +36,15 @@ class SteeringVector:
 
     @classmethod
     def load(cls, save_dir: Path) -> Self:
-        """Load a SteeringVector instance from attributes stored in a directory."""
+        """Load a SteeringVector instance from attributes stored in a directory.
+
+        Args:
+            save_dir: Directory containing 'directions.pt' and optionally
+                'offsets.pt' and 'vector_scales.npy'.
+
+        Returns:
+            Loaded SteeringVector instance.
+        """
         if isinstance(save_dir, str):
             save_dir = Path(save_dir)
 
@@ -44,7 +62,11 @@ class SteeringVector:
 
 
     def save(self, save_dir: Path):
-        """Save the instance's attributes to a directory."""
+        """Save the instance's attributes to a directory.
+
+        Args:
+            save_dir: Directory to save the vector components.
+        """
         if isinstance(save_dir, str):
             save_dir = Path(save_dir)
 
@@ -64,7 +86,19 @@ class SteeringVector:
 
     @classmethod
     def fit(cls, method: str, pos_acts: TensorType["layer", "n_example", -1], neg_acts: TensorType["layer", "n_example", -1], **kwargs) -> Self:
-        """Compute candidate vectors from model activations and return a SteeringVector instance."""
+        """Compute candidate vectors from model activations.
+
+        Args:
+            method: Vector extraction method - "MD" (difference-in-means) or
+                "WMD" (weighted mean difference).
+            pos_acts: Activations from positive examples [n_layers, n_pos, hidden].
+            neg_acts: Activations from negative examples [n_layers, n_neg, hidden].
+            **kwargs: Additional arguments for specific methods:
+                - WMD: pos_weights, neg_weights, neutral_acts
+
+        Returns:
+            SteeringVector instance with computed directions.
+        """
         if method == "MD":
             return diff_in_means(cls, pos_acts, neg_acts)
 
@@ -74,7 +108,19 @@ class SteeringVector:
             raise ValueError(f"Unknown method: '{method}'")
 
     def validate(self, val_acts: TensorType["layer", "n_example", -1], concept_scores: np.ndarray, save_dir: Path = None) -> Dict:
-        """Validate candidate vectors based on projection correlation and RMSE (linear separability)."""
+        """Validate candidate vectors based on projection correlation and RMSE.
+
+        Measures how well each layer's steering direction correlates with the
+        expected concept disparity scores on validation data.
+
+        Args:
+            val_acts: Validation set activations [n_layers, n_val, hidden].
+            concept_scores: Expected concept disparity scores for validation examples.
+            save_dir: Optional directory to save validation results and projections.
+
+        Returns:
+            List of dicts containing per-layer validation metrics (corr, p_val, RMSE).
+        """
         n_layer = val_acts.shape[0]
         results, projections = [], []
         self.scales = []
@@ -106,6 +152,20 @@ class SteeringVector:
     
     @staticmethod
     def get_top_layer_id(results: Dict = None, save_dir: Path = None, filter_layer_pct: float = 0.2, save_top_layers: bool = True) -> int:
+        """Select the best layer for steering based on validation results.
+
+        Filters out the last N% of layers and selects the layer with the best
+        combination of correlation and RMSE (corr - RMSE).
+
+        Args:
+            results: Validation results dict. If None, loads from save_dir.
+            save_dir: Directory containing 'val_results.json'.
+            filter_layer_pct: Percentage of top layers to exclude from selection.
+            save_top_layers: Whether to save the ranked layer list to disk.
+
+        Returns:
+            Layer ID of the best steering layer.
+        """
         if results is None and save_dir is None:
             raise ValueError("Either of the arguments is required: results, save_dir")
         
@@ -142,7 +202,16 @@ class SteeringVector:
         return projs.to(torch.float64)
     
     def steering_func(self, coeff: float = 0, reposition: bool = True) -> Callable:
-        """Return an intervention function for steering."""
+        """Return an intervention function for steering.
+
+        Args:
+            coeff: Steering coefficient controlling intervention strength.
+            reposition: If True, projects out the original component before adding
+                the steered representation. If False, simply adds the scaled vector.
+
+        Returns:
+            Callable that takes (activations, layer_id) and returns modified activations.
+        """
         if reposition:
             return lambda x, layer: x - self.orthogonal_projection(x, layer) + self.get_scaled_vec(layer) * coeff
         else:

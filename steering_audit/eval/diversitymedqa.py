@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import List, Callable
 import numpy as np
 import pandas as pd
-from ..utils import save_to_json_file
-from .task import Task
+from ..constants import DIVERSITYMEDQA_ANSWER_IDX
+from .task import Task, TokenProbabilityTaskMixin
 
 BASE_TEMPLATE = """\
 Question: {question}
@@ -14,10 +14,9 @@ C. {option_C}
 D. {option_D}
 """
 OUTPUT_PREFIX = "Answer:"
-answer_idx = {"A": 0, "B": 1, "C": 2, "D": 3}
 
 
-class DiversityMedQA(Task):
+class DiversityMedQA(Task, TokenProbabilityTaskMixin):
     def __init__(self, task_name="diversitymedqa_gender"):
         super().__init__(task_name=task_name, max_new_tokens=20, output_labels=[" A", " B", " C", " D"])
 
@@ -55,15 +54,6 @@ class DiversityMedQA(Task):
             inputs.append(prompt)
 
         return chat_template_func(inputs, output_prefix=OUTPUT_PREFIX)
-    
-    def save_outputs(self, outputs, save_filepath: Path):
-        results = []
-        for x, output_probs in zip(self.dataset, outputs):
-            out = x
-            out["output_probs"] = output_probs.tolist()
-            results.append(out)
-
-        save_to_json_file(results, save_filepath)
 
     def load_and_process_result(self, output_filepath: Path) -> pd.DataFrame:
         outputs = json.load(open(output_filepath, "r"))
@@ -73,7 +63,7 @@ class DiversityMedQA(Task):
             "F": "female", "M": "male"
         }
         df["group"] = df["group"].map(group_label_mapping)
-        df["correct"] = df.apply(lambda row: np.argmax(row["output_probs"]) == answer_idx[row["answer_idx"]], axis=1)
+        df["correct"] = df.apply(lambda row: np.argmax(row["output_probs"]) == DIVERSITYMEDQA_ANSWER_IDX[row["answer_idx"]], axis=1)
         df = df.drop('output_probs', axis=1)
         return df
     

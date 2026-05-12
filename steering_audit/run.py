@@ -9,7 +9,8 @@ import numpy as np
 import pandas as pd
 from .config import Config, EvalConfig, SteeringConfig
 from .steering import ModelBase, SteeringVector, Dataset
-from .eval import Evaluator, load_eval_task, eval_tasks
+from .eval import Evaluator, load_eval_task
+from .constants import EVAL_TASKS
 from .utils import PromptIterator, clear_torch_cache
 
 warnings.filterwarnings("ignore")
@@ -43,7 +44,7 @@ def parse_arguments():
     # Evaluation
     parser.add_argument('--run_steering_eval', action='store_true', help='Run evaluation with steering.')
     parser.add_argument('--run_blackbox_eval', action='store_true', help='Run black-box evaluation.')
-    parser.add_argument('--tasks', nargs="+", type=str, choices=eval_tasks, help='Run evaluation tasks')
+    parser.add_argument('--tasks', nargs="+", type=str, choices=EVAL_TASKS, help='Run evaluation tasks')
     parser.add_argument('--layer_id', type=int, default=None, help='Layer id to intervene.')
     parser.add_argument('--min_coeff', type=float, default=-1, help="Minimum steering coefficient.")
     parser.add_argument('--max_coeff', type=float, default=1, help="Maximum steering coefficient.")
@@ -183,8 +184,8 @@ def blackbox_eval(evaluator: Evaluator, model: ModelBase, task_list: List[str]):
     """
     logging.info("Running blackbox evaluation")
     for task_name in task_list:
-        if task_name.startswith("south-german"):
-            if task_name == "south-german-names":
+        if task_name.startswith("south_german"):
+            if task_name == "south_german_names":
                 task = load_eval_task(task_name)
             else:
                 task = load_eval_task(task_name, explicit=True) # Use explicit protected attribute

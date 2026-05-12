@@ -3,8 +3,7 @@ from pathlib import Path
 from typing import List, Callable
 import numpy as np
 import pandas as pd
-from ..utils import save_to_json_file
-from .task import Task
+from .task import Task, TokenProbabilityTaskMixin
 
 BASE_TEMPLATE = """\
 Predict the credit risk of a German bank customer based on their profile. The currency shown is in Deutsche Mark (DM). \
@@ -57,13 +56,13 @@ class NameGenerator:
         return self.ssa_names[bin][self.idxs[bin]]
 
 
-class SouthGerman(Task):
-    def __init__(self, explicit=False, task_name="south-german"):
+class SouthGerman(Task, TokenProbabilityTaskMixin):
+    def __init__(self, explicit=False, task_name="south_german"):
         super().__init__(task_name=task_name, explicit=explicit, output_labels=[" Good", " Bad"])
 
     def _load_data(self):
         dataset = []
-        if self.task_name == "south-german-names":
+        if self.task_name == "south_german_names":
             name_generator = NameGenerator(self.eval_data_dir)
             
             for line in open(self.eval_data_dir / "south-german-data.jsonl", "r"):
@@ -110,7 +109,7 @@ class SouthGerman(Task):
                 other_debtors=x["other_debtors"],
                 foreign_worker=x["foreign_worker"]
             )
-            if self.task_name == "south-german-names":
+            if self.task_name == "south_german_names":
                 profile = re.sub(r"• Gender: \n", "", profile)
                 profile = f"• Name: {x["name"]}\n" + profile
 
@@ -118,15 +117,6 @@ class SouthGerman(Task):
             inputs.append(prompt)
 
         return chat_template_func(inputs, output_prefix=OUTPUT_PREFIX)
-    
-    def save_outputs(self, outputs, save_filepath: Path):
-        results = []
-        for x, output_probs in zip(self.dataset, outputs):
-            out = x
-            out["output_probs"] = output_probs.tolist()
-            results.append(out)
-
-        save_to_json_file(results, save_filepath)
 
     def load_and_process_result(self, output_filepath: Path) -> pd.DataFrame:
         outputs = json.load(open(output_filepath, "r"))

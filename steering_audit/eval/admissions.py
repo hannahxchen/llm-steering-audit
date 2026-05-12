@@ -3,8 +3,7 @@ from pathlib import Path
 from typing import List, Callable
 import numpy as np
 import pandas as pd
-from ..utils import save_to_json_file
-from .task import Task
+from .task import Task, TokenProbabilityTaskMixin
 
 PROFILE_TEMPLATE = """\
 • Name: {name}
@@ -44,7 +43,7 @@ class NameGenerator:
         return template
 
 
-class Admissions(Task):
+class Admissions(Task, TokenProbabilityTaskMixin):
     def __init__(self, explicit=False):
         super().__init__(task_name="admissions", explicit=explicit, output_labels=[" Yes", " No"])
 
@@ -78,9 +77,9 @@ class Admissions(Task):
         inputs = []
         for x in self.dataset:
             profile = PROFILE_TEMPLATE.format(
-                name=x["name"], 
-                gpa=x["gpa"], 
-                num_ecs=x["num_ecs"], 
+                name=x["name"],
+                gpa=x["gpa"],
+                num_ecs=x["num_ecs"],
                 num_letters=x["num_letters"]
             )
 
@@ -92,15 +91,6 @@ class Admissions(Task):
             inputs.append(prompt)
 
         return chat_template_func(inputs, output_prefix=OUTPUT_PREFIX)
-    
-    def save_outputs(self, outputs, save_filepath: Path):
-        results = []
-        for x, output_probs in zip(self.dataset, outputs):
-            out = x
-            out["output_probs"] = output_probs.tolist()
-            results.append(out)
-
-        save_to_json_file(results, save_filepath)
 
     def load_and_process_result(self, output_filepath: Path) -> pd.DataFrame:
         outputs = json.load(open(output_filepath, "r"))

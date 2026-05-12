@@ -8,13 +8,9 @@ import torch.nn.functional as F
 
 from ..data import load_datasplit, load_target_words
 from ..utils import PromptIterator, save_to_json_file
+from ..constants import CONCEPT_LABELS
 from .model import ModelBase
 from .steering_utils import get_target_token_ids
-
-concept_labels = {
-    "gender": ("F", "M"), # (Female, Male)
-    "race": ("B", "W") # (Black, White)
-}
 
 
 @dataclass
@@ -55,8 +51,8 @@ class Dataset:
         train_data = load_datasplit(dataset, split="train", sample_size=-1, cached_dir=cached_dir)
         val_data = load_datasplit(dataset, split="val", sample_size=n_val, cached_dir=cached_dir)
         target_words = load_target_words(concept)
-        pos_tokens = target_words[concept_labels[concept][0]]
-        neg_tokens = target_words[concept_labels[concept][1]]
+        pos_tokens = target_words[CONCEPT_LABELS[concept][0]]
+        neg_tokens = target_words[CONCEPT_LABELS[concept][1]]
         
         return cls(train_data=train_data, val_data=val_data, 
                    threshold=threshold, pos_tokens=pos_tokens, neg_tokens=neg_tokens)

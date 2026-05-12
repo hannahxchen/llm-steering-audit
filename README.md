@@ -83,7 +83,7 @@ Evaluate using the extracted steering vector:
 python -m steering_audit.run \
     --config_file runs/gender-gendered_language/Llama-3.1-8B-Instruct/config.yaml \
     --run_steering_eval \
-    --tasks admissions south-german \
+    --tasks admissions south_german \
     --min_coeff -1.0 \
     --max_coeff 1.0 \
     --increment 0.2
@@ -97,7 +97,7 @@ Run counterfactual baseline for comparison:
 python -m steering_audit.run \
     --model_name meta-llama/Llama-3.1-8B-Instruct \
     --run_blackbox_eval \
-    --tasks admissions south-german \
+    --tasks admissions south_german \
     --save_dir runs/baseline/Llama-3.1-8B-Instruct
 ```
 
@@ -120,8 +120,8 @@ The main config file (`config.yaml`) stores parameters for steering vector extra
 | `judicial_guilt` | Predict conviction/acquittal based on dialect | Race |
 | `judicial_penalty` | Predict life/death sentence based on dialect | Race |
 | `admissions` | University admission decisions | Gender/Race |
-| `south-german` | Credit risk assessment | Gender |
-| `south-german-names` | Credit risk with name-based gender signals | Gender |
+| `south_german` | Credit risk assessment | Gender |
+| `south_german_names` | Credit risk with name-based gender signals | Gender |
 | `diversitymedqa_gender` | Medical diagnosis with gendered patient info | Gender |
 | `diversitymedqa_ethnicity` | Medical diagnosis with ethnicity info | Race |
 

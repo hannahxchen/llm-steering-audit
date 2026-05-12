@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import List, Callable, Self, Any, Dict
 import pandas as pd
 from ..config import EVAL_DATA_DIR
+from ..utils import save_to_json_file
 
 class Task(ABC):
     """Abstract base class for evaluation tasks.
@@ -86,3 +87,25 @@ class Task(ABC):
             Dict mapping group names to metric values.
         """
         pass
+
+
+class TokenProbabilityTaskMixin:
+    """Mixin for tasks that output token probabilities.
+
+    Provides a default implementation of save_outputs for tasks that
+    compute next-token probabilities over a set of output labels.
+    """
+
+    def save_outputs(self, outputs, save_filepath: Path):
+        """Save token probability outputs.
+
+        Args:
+            outputs: Array of token probabilities [n_examples, n_labels].
+            save_filepath: Path to save results to.
+        """
+        results = []
+        for item, probs in zip(self.dataset, outputs):
+            result = dict(item)  # Copy item data
+            result["output_probs"] = probs.tolist()
+            results.append(result)
+        save_to_json_file(results, save_filepath)

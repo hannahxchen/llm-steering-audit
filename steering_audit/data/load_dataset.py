@@ -2,17 +2,17 @@ import json, random
 import logging
 from pathlib import Path
 import pandas as pd
+from ..constants import CONCEPTS, DATASETS
 
 DATA_DIR = Path(__file__).resolve().parent
-CONCEPTS = ["gender", "race"]
-DATASETS = ["gendered_language", "gender_identity", "racial_identity", "dialect"]
+
 
 # Template sampler
 class Template:
     def __init__(self, templates):
         self.templates = templates
         self.idx = 0
-        
+
     def _reset(self):
         random.shuffle(self.templates)
         self.idx = 0
@@ -53,7 +53,7 @@ def load_datasplit(dataset: str, split="train", sample_size=-1, cached_dir: Path
 
     if sample_size > 0:
         data = data.sample(n=sample_size)
-    
+
     instructions = [line.strip() for line in open(DATA_DIR / f"instructions/{dataset}.txt", "r").readlines()]
     instruction_set = Template(instructions)
 
@@ -64,7 +64,7 @@ def load_datasplit(dataset: str, split="train", sample_size=-1, cached_dir: Path
         inst, output_prefix = inst.split(" | ")
         prompts.append(inst.format(text))
         output_prefixes.append(output_prefix)
-    
+
     data["prompt"] = prompts
     data["output_prefix"] = output_prefixes
 

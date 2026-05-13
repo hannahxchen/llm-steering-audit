@@ -1,48 +1,12 @@
 # White-Box Sensitivity Auditing with Steering Vectors
 
-This repository contains the implementation for the paper ["White-Box Sensitivity Auditing with Steering Vectors"](https://arxiv.org/abs/2601.16398) (Cyerey, Ji, and Evans).
+This repository contains the implementation for the paper "[White-Box Sensitivity Auditing with Steering Vectors](https://arxiv.org/abs/2601.16398)" (Cyerey, Ji, and Evans).
 
 ## Overview
 
 Traditional black-box audits evaluate models only through input-output testing, which limits their ability to surface subtle properties like gender or race bias. This work introduces a **white-box sensitivity auditing framework** that uses activation steering to conduct more rigorous assessments through model internals.
 
 The framework extracts steering vectors that manipulate high-level concepts (e.g., gender, race) within a model's internal representations and measures model sensitivity via directional derivatives. The target use case is bias auditing in high-stakes LLM decision tasks.
-
-## Key Components
-
-- **Steering Vector Extraction**: Implements the weighted mean difference (WMD) method from [Cyerey & Evans 2025](https://arxiv.org/abs/2410.13835) to extract concept directions from model activations
-- **White-Box Evaluation**: Uses steering vectors to probe model sensitivity to protected attributes across four decision tasks
-- **Black-Box Baseline**: Counterfactual evaluation for comparison with the white-box approach
-
-## Repository Structure
-
-```
-llm-steering-audit/
-├── steering_audit/           # Main package
-│   ├── steering/             # Steering vector extraction and model interaction
-│   │   ├── model.py          # ModelBase class wrapping nnsight (model loading, activation extraction, generation)
-│   │   ├── steering_vector.py # SteeringVector class (extraction, validation, steering functions)
-│   │   ├── dataset.py        # Dataset class for loading and sampling training data
-│   │   └── steering_utils.py # Vector computation utilities (WMD, MD methods)
-│   ├── eval/                 # Evaluation tasks and evaluator
-│   │   ├── evaluator.py      # Evaluator class (runs steering and black-box evaluations)
-│   │   ├── task.py           # Abstract Task class defining the evaluation interface
-│   │   ├── judicial.py       # Judicial task (conviction and penalty prediction)
-│   │   ├── admissions.py     # University admissions task
-│   │   ├── south_german.py   # Credit scoring task (South German Credit dataset)
-│   │   └── diversitymedqa.py # Medical diagnosis task (DiversityMedQA dataset)
-│   ├── data/                 # Data loading and processing
-│   │   ├── load_dataset.py   # Functions for loading training data splits and target word lists
-│   │   ├── datasplits/       # CSV files for training/validation splits
-│   │   ├── instructions/     # Instruction templates for prompting
-│   │   └── eval_data/        # Evaluation datasets (JSON/JSONL files)
-│   ├── config.py             # Configuration dataclasses (Config, EvalConfig, SteeringConfig)
-│   ├── utils.py              # Utility functions (JSON serialization, PromptIterator, etc.)
-│   └── run.py                # Main entry point for training and evaluation
-├── overall_results_plots.ipynb  # Notebook for generating Figure 2 (paper results)
-├── requirements.txt          # Python dependencies
-└── white-box-auditing-paper.pdf  # Paper PDF
-```
 
 ## Installation
 
@@ -113,7 +77,9 @@ The main config file (`config.yaml`) stores parameters for steering vector extra
 - `weighted_sample`: Whether to use weighted sampling during training
 - `filter_layer_pct`: Percentage of layers to filter from the end during layer selection
 
-## Available Evaluation Tasks
+All valid values for concepts, datasets, methods, and tasks are defined in `steering_audit/constants.py`.
+
+### Available Evaluation Tasks
 
 | Task | Description | Concept |
 |------|-------------|---------|
@@ -128,6 +94,37 @@ The main config file (`config.yaml`) stores parameters for steering vector extra
 ## Reproducing Paper Results
 
 The notebook `overall_results_plots.ipynb` contains the code to generate Figure 2 in the paper, which compares black-box and white-box evaluation results across tasks and models.
+
+## Repository Structure
+
+```
+llm-steering-audit/
+├── steering_audit/           # Main package
+│   ├── steering/             # Steering vector extraction and model interaction
+│   │   ├── model.py          # ModelBase class (model loading, activation extraction, generation)
+│   │   ├── steering_vector.py # SteeringVector class (extraction, validation, steering functions)
+│   │   ├── dataset.py        # Dataset class for loading and sampling training data
+│   │   └── steering_utils.py # Vector computation utilities (WMD, MD methods)
+│   ├── eval/                 # Evaluation tasks and evaluator
+│   │   ├── evaluator.py      # Evaluator class (runs steering and black-box evaluations)
+│   │   ├── task.py           # Abstract Task class and mixins for evaluation tasks
+│   │   ├── judicial.py       # Judicial task (conviction and penalty prediction)
+│   │   ├── admissions.py     # University admissions task
+│   │   ├── south_german.py   # Credit scoring task (South German Credit dataset)
+│   │   └── diversitymedqa.py # Medical diagnosis task (DiversityMedQA dataset)
+│   ├── data/                 # Data loading and processing
+│   │   ├── load_dataset.py   # Functions for loading training data splits and target words
+│   │   ├── datasplits/       # CSV files for training/validation splits
+│   │   ├── instructions/     # Instruction templates for prompting
+│   │   └── eval_data/        # Evaluation datasets (JSON/JSONL files)
+│   ├── constants.py          # Centralized constants (concepts, datasets, tasks, methods)
+│   ├── types.py              # Type aliases for tensor shapes
+│   ├── config.py             # Configuration dataclasses (Config, EvalConfig, SteeringConfig)
+│   ├── utils.py              # Utility functions (JSON serialization, PromptIterator, etc.)
+│   └── run.py                # Main entry point for training and evaluation
+├── overall_results_plots.ipynb  # Notebook for generating Figure 2 (paper results)
+└── requirements.txt          # Python dependencies
+```
 
 ## Citation
 

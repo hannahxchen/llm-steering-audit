@@ -91,9 +91,34 @@ All valid values for concepts, datasets, methods, and tasks are defined in `stee
 | `diversitymedqa_gender` | Medical diagnosis with gendered patient info | Gender |
 | `diversitymedqa_ethnicity` | Medical diagnosis with ethnicity info | Race |
 
-## Reproducing Paper Results
+## Analyzing Results
 
-The notebook `overall_results_plots.ipynb` contains the code to generate Figure 2 in the paper, which compares black-box and white-box evaluation results across tasks and models.
+The `steering_audit.analysis` module provides utilities for loading and analyzing evaluation results:
+
+```python
+from steering_audit.analysis import (
+    get_steering_evaluation_results,
+    get_blackbox_evaluation_results,
+    compute_bias_metrics,
+)
+
+# Compute white-box bias metrics (slopes) across models
+whitebox_df = get_steering_evaluation_results(
+    concept="gender",
+    train_dataset="gendered_language",
+    task_name="admissions",
+    model_list=["Llama-3.1-8B-Instruct"]
+)
+
+# Compute black-box bias metrics (group disparities) across models
+blackbox_df = get_blackbox_evaluation_results(
+    concept="gender",
+    task_name="admissions",
+    model_list=["Llama-3.1-8B-Instruct"]
+)
+```
+
+`overall_results_plots.ipynb` contains the code to generate Figure 2 in the paper, which compares black-box and white-box evaluation results across tasks and models.
 
 ## Repository Structure
 
@@ -117,6 +142,9 @@ llm-steering-audit/
 │   │   ├── datasplits/       # CSV files for training/validation splits
 │   │   ├── instructions/     # Instruction templates for prompting
 │   │   └── eval_data/        # Evaluation datasets (JSON/JSONL files)
+│   ├── analysis/             # Result analysis and metric computation
+│   │   ├── loading.py        # Load results from saved JSON files
+│   │   └── metrics.py        # Bias metric computations (slope, group disparity)
 │   ├── constants.py          # Centralized constants (concepts, datasets, tasks, methods)
 │   ├── types.py              # Type aliases for tensor shapes
 │   ├── config.py             # Configuration dataclasses (Config, EvalConfig, SteeringConfig)

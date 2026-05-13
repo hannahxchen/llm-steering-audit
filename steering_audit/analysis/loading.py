@@ -106,13 +106,11 @@ def get_steering_evaluation_results(
     """Compute white-box bias metrics (slopes) across multiple models.
 
     Args:
-        artifact_dir: Root directory containing model results. If None, uses
-            f"runs/{concept}-{train_dataset}".
+        artifact_dir: Root directory containing model results. If None, uses f"runs/{concept}-{train_dataset}".
         concept: Target concept (for default artifact_dir path).
         train_dataset: Training dataset name (for default artifact_dir path).
         task_name: Task to evaluate.
-        model_list: List of model names to include. If None, uses all directories
-            in artifact_dir.
+        model_list: List of model names to include. If None, uses all directories in artifact_dir.
 
     Returns:
         DataFrame with columns: model, task_name, slope, p.

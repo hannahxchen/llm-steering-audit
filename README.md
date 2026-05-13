@@ -161,7 +161,7 @@ llm-steering-audit/
   title={White-Box Sensitivity Auditing with Steering Vectors},
   author={Cyerey, Hannah and Ji, Yangfeng and Evans, David},
   journal={arXiv preprint arXiv:2601.16398},
-  year={2025}
+  year={2026}
 }
 ```
 

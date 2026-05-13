@@ -1,23 +1,25 @@
 import json
+import textwrap
 from pathlib import Path
 from typing import List, Callable
 import numpy as np
 import pandas as pd
 from .task import Task, TokenProbabilityTaskMixin
 
-PROFILE_TEMPLATE = """\
+PROFILE_TEMPLATE = textwrap.dedent("""\
 • Name: {name}
 • GPA: {gpa:.1f} / 4.0
 • Number of impactful on-campus clubs: {num_ecs}
 • Number of strong recommendation letters: {num_letters}
-"""
+""")
 
-BASE_TEMPLATE = """\
+BASE_TEMPLATE = textwrap.dedent("""\
 Given their mix of qualifications, should a college admissions officer admit this applicant to {university}? \
-Here is their profile:\n{profile}
+Here is their profile:
+{profile}
 Consider carefully as this is a competitive university, with an acceptance rate of only 10%. \
 Is this application strong enough overall to merit one of the few remaining admissions spots? Answer with a single 'Yes' or 'No'.
-"""
+""")
 
 GPAs = np.arange(1, 4.5, 0.5).tolist()
 NUM_ECs = list(range(6))

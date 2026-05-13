@@ -4,13 +4,13 @@ from pathlib import Path
 from typing import List, Optional
 
 import torch
-from torchtyping import TensorType
 import numpy as np
 import pandas as pd
 from .config import Config, EvalConfig, SteeringConfig
 from .steering import ModelBase, SteeringVector, Dataset
 from .eval import Evaluator, load_eval_task
 from .constants import EVAL_TASKS
+from .types import LayerActs
 from .utils import PromptIterator, clear_torch_cache
 
 warnings.filterwarnings("ignore")
@@ -59,7 +59,7 @@ def parse_arguments():
 
 def get_all_layer_activations(
     model: ModelBase, prompts: List[str], batch_size: Optional[int] = 32, positions=[-1]
-) -> TensorType["n_layer", "n_prompt", "hidden_size"]:
+) -> LayerActs:
     """Extract activations from all model layers.
 
     Args:

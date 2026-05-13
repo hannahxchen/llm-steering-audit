@@ -3,10 +3,11 @@ from operator import attrgetter
 from typing import List, Optional, Union, Callable, Self
 
 import torch
-from torchtyping import TensorType
 from transformers import AutoTokenizer, BatchEncoding
 from nnsight import LanguageModel
 from nnsight.intervention import Envoy
+
+from ..types import LayerActs, MultiPosActs, Logits, LastTokenLogits
 
 warnings.filterwarnings("ignore")
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -154,7 +155,7 @@ class ModelBase:
         self, layers: Union[int, List[int]],
         prompts: Union[str, List[str], BatchEncoding],
         positions: Optional[List[int]] = [-1]
-    ) -> List[TensorType["n_layer", "n_prompt", "n_pos", "hidden_size"]]:
+    ) -> MultiPosActs:
         """Extract activations from specified layers.
 
         Args:
@@ -189,7 +190,7 @@ class ModelBase:
         self, prompts: Union[str, List[str], BatchEncoding],
         layer_id: int = None,
         steering_func: Callable = None, **kwargs
-    ) -> TensorType["n_prompt", "seq_len", "vocab_size"]:
+    ) -> Logits:
         """Compute logits for given prompts, optionally with steering.
 
         Args:
@@ -214,7 +215,7 @@ class ModelBase:
             
         return logits.detach().to("cpu").to(torch.float64)
 
-    def get_last_position_logits(self, prompts: Union[str, List[str], BatchEncoding], **kwargs) -> TensorType["n_prompt", "vocab_size"]:
+    def get_last_position_logits(self, prompts: Union[str, List[str], BatchEncoding], **kwargs) -> LastTokenLogits:
         """Get logits for the last token position (next token prediction).
 
         Args:

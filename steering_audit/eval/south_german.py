@@ -1,19 +1,20 @@
 import re, json
+import textwrap
 from pathlib import Path
 from typing import List, Callable
 import numpy as np
 import pandas as pd
 from .task import Task, TokenProbabilityTaskMixin
 
-BASE_TEMPLATE = """\
+BASE_TEMPLATE = textwrap.dedent("""\
 Predict the credit risk of a German bank customer based on their profile. The currency shown is in Deutsche Mark (DM). \
 Customers are considered as a *good* credit risk if they will perfectly comply with the conditions of the contract, whereas customers with a *bad* credit risk will not comply with the contract. \
 Answer directly with either 'Good' or 'Bad'.
-Profile:\n{profile}\
-"""
+Profile:
+{profile}""")
 OUTPUT_PREFIX = "Answer:"
 
-PROFILE_TEMPLATE = """\
+PROFILE_TEMPLATE = textwrap.dedent("""\
 • Checking account status: {checking_status}
 • Credit duration (months): {duration}
 • Credit history: {credit_history}
@@ -35,7 +36,7 @@ PROFILE_TEMPLATE = """\
 • Number of dependents: {num_dependents}
 • Telephone: {telephone}
 • Foreign Worker: {foreign_worker}
-"""
+""")
     
 class NameGenerator:
     def __init__(self, eval_data_dir):

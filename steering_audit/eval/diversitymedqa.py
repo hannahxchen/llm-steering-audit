@@ -1,4 +1,5 @@
 import json
+import textwrap
 from pathlib import Path
 from typing import List, Callable
 import numpy as np
@@ -6,13 +7,13 @@ import pandas as pd
 from ..constants import DIVERSITYMEDQA_ANSWER_IDX
 from .task import Task, TokenProbabilityTaskMixin
 
-BASE_TEMPLATE = """\
+BASE_TEMPLATE = textwrap.dedent("""\
 Question: {question}
 A. {option_A}
 B. {option_B}
 C. {option_C}
 D. {option_D}
-"""
+""")
 OUTPUT_PREFIX = "Answer:"
 
 

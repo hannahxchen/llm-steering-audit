@@ -6,9 +6,9 @@ import numpy as np
 from scipy.stats import pearsonr
 import torch
 import torch.nn.functional as F
-from torchtyping import TensorType
 
 from ..utils import save_to_json_file
+from ..types import SteeringDirections, SteeringOffsets, LayerActs
 from .steering_utils import *
 
 
@@ -24,8 +24,8 @@ class SteeringVector:
         scales: Optional list of scaling factors for each layer to align
             projection magnitudes with concept scores.
     """
-    directions: TensorType["layer", -1]
-    offsets: TensorType["layer", -1] = None
+    directions: SteeringDirections
+    offsets: SteeringOffsets = None
     scales: List[float] = None
 
     def __post_init__(self):
@@ -85,7 +85,7 @@ class SteeringVector:
             self.offsets = self.offsets.to(dtype)
 
     @classmethod
-    def fit(cls, method: str, pos_acts: TensorType["layer", "n_example", -1], neg_acts: TensorType["layer", "n_example", -1], **kwargs) -> Self:
+    def fit(cls, method: str, pos_acts: LayerActs, neg_acts: LayerActs, **kwargs) -> Self:
         """Compute candidate vectors from model activations.
 
         Args:
@@ -107,7 +107,7 @@ class SteeringVector:
         else:
             raise ValueError(f"Unknown method: '{method}'")
 
-    def validate(self, val_acts: TensorType["layer", "n_example", -1], concept_scores: np.ndarray, save_dir: Path = None) -> Dict:
+    def validate(self, val_acts: LayerActs, concept_scores: np.ndarray, save_dir: Path = None) -> Dict:
         """Validate candidate vectors based on projection correlation and RMSE.
 
         Measures how well each layer's steering direction correlates with the
